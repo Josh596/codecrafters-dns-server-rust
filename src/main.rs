@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use std::net::UdpSocket;
 
+use codecrafters_dns_server::header::DnsHeader;
+
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
@@ -13,7 +15,7 @@ fn main() {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
                 println!("Received {} bytes from {}", size, source);
-                let response = [];
+                let response = DnsHeader::new().encode();
                 udp_socket
                     .send_to(&response, source)
                     .expect("Failed to send response");
