@@ -1,4 +1,4 @@
-pub struct DnsHeader {
+pub struct DNSHeader {
     id: u16,                      // 2 bytes
     response_indicator: bool,     // 1 bit
     opcode: u8,                   // 4 bits
@@ -14,9 +14,9 @@ pub struct DnsHeader {
     additional_record_count: u16, // 2 bytes
 }
 
-impl DnsHeader {
-    pub fn new() -> Self {
-        DnsHeader {
+impl DNSHeader {
+    pub fn new(question_count: u16) -> Self {
+        DNSHeader {
             id: 1234,
             response_indicator: true,
             opcode: 0,
@@ -26,7 +26,7 @@ impl DnsHeader {
             recursion_available: false,
             reserved: 0,
             response_code: 0,
-            question_count: 0,
+            question_count: question_count,
             answer_record_count: 0,
             authority_record_count: 0,
             additional_record_count: 0,
