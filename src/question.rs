@@ -1,4 +1,4 @@
-use crate::utils;
+use crate::{header::DNSHeader, utils};
 
 pub struct DNSQuestion {
     domain_name: String,

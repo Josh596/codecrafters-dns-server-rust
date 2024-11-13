@@ -1,7 +1,7 @@
 use crate::{answer::DNSAnswer, header::DNSHeader, question::DNSQuestion};
 
 pub struct DNSMessage {
-    header: DNSHeader,
+    pub header: DNSHeader,
     question: DNSQuestion,
     answer: DNSAnswer,
 }
@@ -22,5 +22,28 @@ impl DNSMessage {
         // self.header.encode()
 
         buffer
+    }
+}
+
+impl From<&[u8]> for DNSMessage {
+    fn from(data: &[u8]) -> Self {
+        let mut header = DNSHeader::from(&data[..12]);
+        let question: DNSQuestion = DNSQuestion::new();
+        let answer: DNSAnswer = DNSAnswer::new();
+
+        header.qr = true;
+        header.aa = false;
+        header.tc = false;
+        header.ra = false;
+        header.z = 0;
+        header.ancount = 1;
+
+        header.rcode = if header.opcode != 0 { 4 } else { 0 };
+
+        Self {
+            header,
+            question,
+            answer,
+        }
     }
 }
