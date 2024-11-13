@@ -15,7 +15,7 @@ pub struct DNSHeader {
 }
 
 impl DNSHeader {
-    pub fn new(question_count: u16) -> Self {
+    pub fn new(question_count: u16, answer_count: u16) -> Self {
         DNSHeader {
             id: 1234,
             response_indicator: true,
@@ -27,7 +27,7 @@ impl DNSHeader {
             reserved: 0,
             response_code: 0,
             question_count: question_count,
-            answer_record_count: 0,
+            answer_record_count: answer_count,
             authority_record_count: 0,
             additional_record_count: 0,
         }
