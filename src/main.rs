@@ -16,7 +16,7 @@ fn main() {
             Ok((size, source)) => {
                 println!("Received {} bytes from {}", size, source);
 
-                let mut dns_message = DNSMessage::from(&buf[..]);
+                let dns_message = DNSMessage::from(&buf[..]);
 
                 let response = dns_message.encode();
                 udp_socket
