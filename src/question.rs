@@ -1,9 +1,9 @@
-use crate::{header::DNSHeader, utils};
+use crate::utils;
 
 pub struct DNSQuestion {
-    domain_name: String,
-    type_: u16,
-    class: u16,
+    pub domain_name: String,
+    pub type_: u16,
+    pub class: u16,
 }
 
 impl DNSQuestion {
@@ -28,5 +28,20 @@ impl DNSQuestion {
         buffer.extend_from_slice(&(self.class as u16).to_be_bytes());
 
         buffer
+    }
+}
+
+impl From<&[u8]> for DNSQuestion {
+    fn from(data: &[u8]) -> Self {
+        let domain_name = utils::decode_domain_name_label_sequence(data);
+
+        let type_ = data[domain_name.len()] as u16;
+        let class = data[domain_name.len() + 1] as u16;
+
+        Self {
+            domain_name,
+            type_,
+            class,
+        }
     }
 }

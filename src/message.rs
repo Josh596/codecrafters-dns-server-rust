@@ -1,4 +1,8 @@
-use crate::{answer::DNSAnswer, header::DNSHeader, question::DNSQuestion};
+use crate::{
+    answer::{DNSAnswer, ResourceRecord},
+    header::DNSHeader,
+    question::DNSQuestion,
+};
 
 pub struct DNSMessage {
     pub header: DNSHeader,
@@ -28,8 +32,8 @@ impl DNSMessage {
 impl From<&[u8]> for DNSMessage {
     fn from(data: &[u8]) -> Self {
         let mut header = DNSHeader::from(&data[..12]);
-        let question: DNSQuestion = DNSQuestion::new();
-        let answer: DNSAnswer = DNSAnswer::new();
+        let mut question: DNSQuestion = DNSQuestion::from(&data[12..]);
+        let mut answer: DNSAnswer = DNSAnswer::new();
 
         header.qr = true;
         header.aa = false;
@@ -37,8 +41,20 @@ impl From<&[u8]> for DNSMessage {
         header.ra = false;
         header.z = 0;
         header.ancount = 1;
-
         header.rcode = if header.opcode != 0 { 4 } else { 0 };
+
+        question.type_ = 1;
+        question.class = 1;
+
+        let mut resource_records = Vec::new();
+        resource_records.push(ResourceRecord {
+            domain_name: question.domain_name.clone(),
+            type_: 1,
+            class: 1,
+            ttl: 60,
+            rdata: Vec::from(&[8, 8, 8, 8]),
+        });
+        answer.rr = resource_records;
 
         Self {
             header,

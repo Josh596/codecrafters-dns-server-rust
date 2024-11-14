@@ -1,11 +1,11 @@
 use crate::utils;
 
 pub struct ResourceRecord {
-    domain_name: String,
-    type_: u16,
-    class: u16,
-    ttl: u32,
-    RDATA: Vec<u8>,
+    pub domain_name: String,
+    pub type_: u16,
+    pub class: u16,
+    pub ttl: u32,
+    pub rdata: Vec<u8>,
 }
 
 impl ResourceRecord {
@@ -26,15 +26,15 @@ impl ResourceRecord {
         buffer.extend_from_slice(&self.type_.to_be_bytes());
         buffer.extend_from_slice(&self.class.to_be_bytes());
         buffer.extend_from_slice(&self.ttl.to_be_bytes());
-        buffer.extend_from_slice(&(self.RDATA.len() as u16).to_be_bytes());
-        buffer.extend_from_slice(&self.RDATA);
+        buffer.extend_from_slice(&(self.rdata.len() as u16).to_be_bytes());
+        buffer.extend_from_slice(&self.rdata);
 
         buffer
     }
 }
 
 pub struct DNSAnswer {
-    RR: Vec<ResourceRecord>,
+    pub rr: Vec<ResourceRecord>,
 }
 
 impl DNSAnswer {
@@ -46,16 +46,16 @@ impl DNSAnswer {
             type_: 1,
             class: 1,
             ttl: 60,
-            RDATA: Vec::from((192168701 as u32).to_be_bytes()),
+            rdata: Vec::from((192168701 as u32).to_be_bytes()),
         });
 
-        Self { RR: records }
+        Self { rr: records }
     }
 
     pub fn encode(&self) -> Vec<u8> {
         let mut buffer = Vec::new();
 
-        for resource in &self.RR {
+        for resource in &self.rr {
             buffer.extend_from_slice(&resource.encode());
         }
         buffer

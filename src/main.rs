@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 use std::net::UdpSocket;
 
-use codecrafters_dns_server::{message::DNSMessage, question::DNSQuestion};
+use codecrafters_dns_server::message::DNSMessage;
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
