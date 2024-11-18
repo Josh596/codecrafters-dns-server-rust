@@ -1,4 +1,4 @@
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufRead, BufReader};
 
 pub fn encode_domain_name(domain_name: &str) -> Vec<u8> {
     // Split based on "."
@@ -30,7 +30,7 @@ pub fn decode_domain_name_label_sequence(
     sequence_reader
         .read_until(0, &mut sequence)
         .expect("Error occurred");
-    println!("Length of Label encoded: {}", &sequence.len());
+    let buf_size = sequence.len();
     // Remove the null byte
     sequence.pop();
     // Get length of first label, Get content of label
@@ -41,7 +41,6 @@ pub fn decode_domain_name_label_sequence(
 
         if label_length < 63 {
             total_label_length += label_length + 1;
-            dbg!(total_label_length);
             let label_bytes = &sequence[index + 1..label_length + index + 1];
             let label = String::from_utf8(Vec::from(label_bytes))
                 .expect("Error occured while decoding domain name label");
@@ -52,11 +51,8 @@ pub fn decode_domain_name_label_sequence(
             // A pointer
             let pointer = u16::from_be_bytes([sequence[index], sequence[index + 1]]);
             let offset = ((pointer & 0b0011_1111_1111_1111) - 12) as usize;
-            dbg!("A pointer!!!");
-            dbg!(offset);
-            dbg!(format!("Added to total_label_length: {total_label_length}"));
+
             total_label_length += 2;
-            dbg!(total_label_length);
             // Get remaining part of labels from
             let (output, _) = decode_domain_name_label_sequence(
                 &full_label_sequences[offset..current_offset],
@@ -67,11 +63,9 @@ pub fn decode_domain_name_label_sequence(
 
             index += 2
         }
-        dbg!(&buffer);
     }
 
     let result = buffer.join(".");
-    dbg!(&result);
 
-    (result, total_label_length)
+    (result, buf_size)
 }

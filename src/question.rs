@@ -1,22 +1,20 @@
 use std::io::{BufRead, BufReader, Read};
 
 use crate::utils;
-
+#[derive(Clone, Debug)]
 pub struct DNSQuestions {
     pub questions: Vec<DNSQuestion>,
 }
 
 impl DNSQuestions {
-    pub fn from_bytes(bytes: &[u8], qd_count: u16) -> Self {
+    pub fn from_bytes(bytes: &[u8], qd_count: u16) -> (Self, usize) {
         let mut questions = Vec::new();
         let mut questions_reader = BufReader::new(bytes);
 
-        dbg!(&qd_count);
         let mut buffer: Vec<u8> = Vec::new();
         let mut current_offset: usize = 0;
+        println!("QD Count: {qd_count}");
         for _ in 0..qd_count {
-            println!("Getting Question");
-
             questions_reader
                 .read_until(0, &mut buffer)
                 .expect("Error occurred");
@@ -32,16 +30,14 @@ impl DNSQuestions {
             println!("{}", &buffer.len());
 
             let question = DNSQuestion::from_bytes(&buffer[..], bytes, current_offset);
-            dbg!(&question.domain_name);
             questions.push(question);
+
             current_offset += &buffer.len();
 
-            dbg!(current_offset);
             buffer.clear();
-            println!("Question added");
         }
 
-        Self { questions }
+        (Self { questions }, current_offset)
     }
 
     pub fn encode(&self) -> Vec<u8> {
@@ -53,24 +49,14 @@ impl DNSQuestions {
         buf
     }
 }
-
+#[derive(Clone, Debug)]
 pub struct DNSQuestion {
     pub domain_name: String,
     pub type_: u16,
     pub class: u16,
-    pub offset: u16,
 }
 
 impl DNSQuestion {
-    // pub fn new() -> Self {
-    //     Self {
-    //         domain_name: String::from("codecrafters.io"),
-    //         type_: 1,
-    //         class: 1,
-    //         offset: 0,
-    //     }
-    // }
-
     pub fn encode(&self) -> Vec<u8> {
         // Encode domain name
         let mut buffer = Vec::new();
@@ -92,14 +78,13 @@ impl DNSQuestion {
         let (domain_name, size) =
             utils::decode_domain_name_label_sequence(&data, full_questions_byte, current_offset);
 
-        let type_ = data[size] as u16;
-        let class = data[size + 1] as u16;
+        let type_ = u16::from_be_bytes([data[size], data[size + 1]]);
+        let class = u16::from_be_bytes([data[size + 2], data[size + 3]]);
 
         Self {
             domain_name,
             type_,
             class,
-            offset: 12,
         }
     }
 }

@@ -1,3 +1,4 @@
+#[derive(Copy, Clone, Debug)]
 pub struct DNSHeader {
     id: u16, // 2 bytes
 
@@ -39,24 +40,6 @@ pub struct DNSHeader {
 }
 
 impl DNSHeader {
-    pub fn new(question_count: u16, answer_count: u16) -> Self {
-        DNSHeader {
-            id: 1234,
-            qr: true,
-            opcode: 0,
-            aa: false,
-            tc: false,
-            rd: false,
-            ra: false,
-            z: 0,
-            rcode: 0,
-            qdcount: question_count,
-            ancount: answer_count,
-            nscount: 0,
-            arcount: 0,
-        }
-    }
-
     pub fn encode(&self) -> [u8; 12] {
         let mut buffer = [0u8; 12];
 
@@ -83,7 +66,6 @@ impl From<&[u8]> for DNSHeader {
         if data.len() != 12 {
             panic!("Invalid u8 slice. The length of header is 12 bytes")
         }
-
         DNSHeader {
             id: u16::from_be_bytes([data[0], data[1]]),
             qr: (data[2] & 0b10000000) != 0,

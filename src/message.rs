@@ -1,13 +1,9 @@
-use crate::{
-    answer::{DNSAnswer, ResourceRecord},
-    header::DNSHeader,
-    question::{DNSQuestion, DNSQuestions},
-};
-
+use crate::{answer::DNSAnswer, header::DNSHeader, question::DNSQuestions};
+#[derive(Clone, Debug)]
 pub struct DNSMessage {
     pub header: DNSHeader,
-    questions: DNSQuestions,
-    answer: DNSAnswer,
+    pub questions: DNSQuestions,
+    pub answer: DNSAnswer,
 }
 
 impl DNSMessage {
@@ -27,39 +23,62 @@ impl DNSMessage {
 
         buffer
     }
+
+    pub fn split(&self) -> Vec<Self> {
+        let mut buf = Vec::new();
+
+        for question in &self.questions.questions {
+            let message = DNSMessage {
+                header: self.header.clone(),
+                questions: DNSQuestions {
+                    questions: vec![question.clone()],
+                },
+                answer: DNSAnswer { rr: vec![] },
+            };
+
+            buf.push(message);
+        }
+        buf
+    }
+
+    pub fn merge(messages: Vec<Self>) -> Self {
+        let mut questions = Vec::new();
+        let mut answers = Vec::new();
+        for message in &messages {
+            questions.extend_from_slice(&message.questions.questions);
+            answers.extend_from_slice(&message.answer.rr);
+        }
+
+        let mut header = messages[0].header.clone();
+        header.ancount = messages.len() as u16;
+        header.qdcount = messages.len() as u16;
+
+        DNSMessage {
+            header: header,
+            questions: DNSQuestions {
+                questions: questions,
+            },
+            answer: DNSAnswer { rr: answers },
+        }
+    }
 }
 
 impl From<&[u8]> for DNSMessage {
     fn from(data: &[u8]) -> Self {
+        let mut cursor = 0;
         let mut header = DNSHeader::from(&data[..12]);
-        let mut questions = DNSQuestions::from_bytes(&data[12..], header.qdcount);
-        let mut answer: DNSAnswer = DNSAnswer::new();
+        cursor += 12;
+        let (questions, bytes_read) = DNSQuestions::from_bytes(&data[12..], header.qdcount);
+        cursor += bytes_read;
+        let (answer, bytes_read) = DNSAnswer::from_bytes(&data[cursor..], header.ancount);
+        cursor += bytes_read;
 
-        header.qr = true;
-        header.aa = false;
-        header.tc = false;
-        header.ra = false;
-        header.z = 0;
-        header.rcode = if header.opcode != 0 { 4 } else { 0 };
-
-        // questions.questions[0].type_ = 1;
-        // questions.questions[0].class = 1;
-
-        let mut resource_records = Vec::new();
-        for question in &mut questions.questions {
-            question.type_ = 1;
-            question.class = 1;
-            resource_records.push(ResourceRecord {
-                domain_name: question.domain_name.clone(),
-                type_: question.type_,
-                class: question.class,
-                ttl: 60,
-                rdata: Vec::from(&[8, 8, 8, 8]),
-            });
-        }
-
-        answer.rr = resource_records;
-        header.ancount = answer.rr.len() as u16;
+        // header.qr = true;
+        // header.aa = false;
+        // header.tc = false;
+        // header.ra = false;
+        // header.z = 0;
+        // header.rcode = if header.opcode != 0 { 4 } else { 0 };
 
         Self {
             header,
